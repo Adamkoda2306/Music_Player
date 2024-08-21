@@ -1,7 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:music_player/models/playlist_provider.dart';
+import 'package:music_player/pages/HomePage.dart';
+import 'package:music_player/themes/theme_provider.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(MultiProvider(
+    providers: [
+      ChangeNotifierProvider(
+        create: (context) => ThemeProvider(),
+      ),
+      ChangeNotifierProvider(
+        create: (context) => PlaylistProvider(),
+      ),
+    ],
+    child: const MyApp(),
+  ));
 }
 
 class MyApp extends StatelessWidget {
@@ -10,13 +24,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Material(
-        child: Center(
-          child: Container(
-            child: Text("Hello World!!"),
-          ),
-        ),
-      ),
+      home: const Homepage(),
+      theme: Provider.of<ThemeProvider>(context).themeData,
     );
   }
 }
