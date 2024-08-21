@@ -27,13 +27,13 @@ class _HomepageState extends State<Homepage> {
   // go to a song
   void goToSong(int songIndex) {
     // Update current song index
-    playlistProvider._currentSongIndex = songIndex;
+    playlistProvider.currentSongIndex = songIndex;
 
     // navigate to song page
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => Songpage(),
+        builder: (context) => const Songpage(),
       ),
     );
   }
