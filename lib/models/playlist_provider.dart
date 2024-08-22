@@ -102,9 +102,21 @@ class PlaylistProvider extends ChangeNotifier {
 
   //initially not playing
   bool _isPlaying = false;
+  bool _isShuffling = false;
+  bool _isRepeating = false;
 
   // play the song
   void play() async {
+    final String path = _playlist[_currentSongIndex!].audioPath;
+    await _audioPlayer.stop();
+    await _audioPlayer.play(AssetSource(path));
+    _isPlaying = true;
+    notifyListeners();
+  }
+
+  //replay the song
+  void replay() async {
+    if (_currentSongIndex == null) return; // No song selected
     final String path = _playlist[_currentSongIndex!].audioPath;
     await _audioPlayer.stop();
     await _audioPlayer.play(AssetSource(path));
@@ -143,13 +155,20 @@ class PlaylistProvider extends ChangeNotifier {
 
   //play next song
   void playNext() {
-    if (_currentSongIndex != null) {
-      if (_currentSongIndex! < _playlist.length - 1) {
-        currentSongIndex = _currentSongIndex! + 1;
-      } else {
-        currentSongIndex = 0;
+    if (_isShuffling) {
+      _currentSongIndex =
+          (0 + (DateTime.now().millisecondsSinceEpoch % _playlist.length))
+              .toInt();
+    } else {
+      if (_currentSongIndex != null) {
+        if (_currentSongIndex! < _playlist.length - 1) {
+          _currentSongIndex = _currentSongIndex! + 1;
+        } else {
+          _currentSongIndex = 0;
+        }
       }
     }
+    play();
   }
 
   // play previous song
@@ -158,11 +177,12 @@ class PlaylistProvider extends ChangeNotifier {
       seek(Duration.zero);
     } else {
       if (_currentSongIndex! > 0) {
-        currentSongIndex = _currentSongIndex! - 1;
+        _currentSongIndex = _currentSongIndex! - 1;
       } else {
-        currentSongIndex = _playlist.length - 1;
+        _currentSongIndex = _playlist.length - 1;
       }
     }
+    play();
   }
 
   //listen to durations
@@ -181,8 +201,23 @@ class PlaylistProvider extends ChangeNotifier {
 
     //listen for song completion
     _audioPlayer.onPlayerComplete.listen((event) {
-      playNext();
+      if (_isRepeating) {
+        // Re-play the current song
+        replay();
+      } else {
+        playNext();
+      }
     });
+  }
+
+  void toggleShuffle() {
+    _isShuffling = !_isShuffling;
+    notifyListeners();
+  }
+
+  void toggleRepeat() {
+    _isRepeating = !_isRepeating;
+    notifyListeners();
   }
 
   //dispose audio player
@@ -194,6 +229,8 @@ class PlaylistProvider extends ChangeNotifier {
   List<Song> get playlist => _playlist;
   int? get currentSongIndex => _currentSongIndex;
   bool get isPlaying => _isPlaying;
+  bool get isShuffling => _isShuffling;
+  bool get isRepeating => _isRepeating;
   Duration get currentDuration => _currentDuration;
   Duration get totalDuration => _totalDuration;
 
