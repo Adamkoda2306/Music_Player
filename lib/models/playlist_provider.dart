@@ -81,6 +81,20 @@ class PlaylistProvider extends ChangeNotifier {
         albumName: "Robo",
         albumArtImagePath: "assets/images/Robo.jpg",
         audioPath: "audio/Neelo_Valapu.mp3"),
+
+    // Song 12
+    Song(
+        songName: "Sarimapa",
+        albumName: "Saripodha Sanivaram",
+        albumArtImagePath: "assets/images/Saripodha_Sanivaram.jpg",
+        audioPath: "audio/Sarimapa.mp3"),
+
+    // Song 13
+    Song(
+        songName: "Ullaasam",
+        albumName: "Saripodha Sanivaram",
+        albumArtImagePath: "assets/images/Saripodha_Sanivaram.jpg",
+        audioPath: "audio/Ullaasam.mp3"),
   ];
 
   int? _currentSongIndex;
