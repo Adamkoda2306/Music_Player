@@ -1,6 +1,7 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:music_player/models/song.dart';
+import 'dart:math';
 
 class PlaylistProvider extends ChangeNotifier {
   // Playlists of the songs
@@ -154,12 +155,18 @@ class PlaylistProvider extends ChangeNotifier {
     await _audioPlayer.seek(position);
   }
 
+  // Shuffle the playlist
+  void _shufflePlaylist() {
+    _playlist.shuffle(Random()); // Shuffles the playlist
+  }
+
   // Play next song
   void playNext() {
     if (_queue.isNotEmpty) {
       _currentSongIndex = _playlist.indexOf(_queue.removeAt(0)); // Get the next song in the queue
     } else if (_isShuffling) {
-      _currentSongIndex = DateTime.now().millisecondsSinceEpoch % _playlist.length; // Shuffle to a random song
+      _shufflePlaylist(); // Shuffle playlist if shuffle mode is enabled
+      _currentSongIndex = 0; // Start playing from the beginning of the shuffled list
     } else {
       // Default to playing the next song in the playlist in order
       if (_currentSongIndex != null) {
@@ -168,7 +175,6 @@ class PlaylistProvider extends ChangeNotifier {
     }
     play(); // Play the selected song
   }
-
 
   // Play previous song
   Future<void> playPrevious() async {
@@ -204,7 +210,6 @@ class PlaylistProvider extends ChangeNotifier {
         playNext(); // Play the next song in the queue
       }
     });
-
   }
 
   // Toggle shuffle
