@@ -5,91 +5,78 @@ import 'package:music_player/models/song.dart';
 class PlaylistProvider extends ChangeNotifier {
   // Playlists of the songs
   final List<Song> _playlist = [
-    // Song 1
     Song(
         songName: "Ammayi",
         albumName: "Animal",
         albumArtImagePath: "assets/images/Animal.jpeg",
         audioPath: "audio/Ammayi.mp3"),
 
-    // Song 2
     Song(
         songName: "Evarevaro",
         albumName: "Animal",
         albumArtImagePath: "assets/images/Animal.jpeg",
         audioPath: "audio/Evarevaro.mp3"),
 
-    // Song 3
     Song(
         songName: "Ney Verey",
         albumName: "Animal",
         albumArtImagePath: "assets/images/Animal.jpeg",
         audioPath: "audio/Ney_Veyrey.mp3"),
 
-    // Song 4
     Song(
         songName: "Yaalo Yaalaa",
         albumName: "Animal",
         albumArtImagePath: "assets/images/Animal.jpeg",
         audioPath: "audio/Yaalo_Yaalaa.mp3"),
 
-    // Song 5
     Song(
         songName: "Chuttamalle",
         albumName: "Devara",
         albumArtImagePath: "assets/images/Devara.jpg",
         audioPath: "audio/Chuttamalle.mp3"),
 
-    // Song 6
     Song(
         songName: "Ee Raathale",
         albumName: "Radhe Shyam",
         albumArtImagePath: "assets/images/Radhe_Shyam.jpg",
         audioPath: "audio/Ee_Raathale.mp3"),
 
-    // Song 7
     Song(
         songName: "Nagumomu Thaarale",
         albumName: "Radhe Shyam",
         albumArtImagePath: "assets/images/Radhe_Shyam.jpg",
         audioPath: "audio/Nagumomu_Thaarale.mp3"),
 
-    // Song 8
     Song(
         songName: "Hoyna Hoyna",
         albumName: "Nani's Gang Leader",
         albumArtImagePath: "assets/images/Nani_GangLeader.jpg",
         audioPath: "audio/Hoyna_Hoyna.mp3"),
 
-    // Song 9
     Song(
         songName: "Ninnu Chuse Anandamlo",
         albumName: "Nani's Gang Leader",
         albumArtImagePath: "assets/images/Nani_GangLeader.jpg",
         audioPath: "audio/Ninnu_Chuse_Anandamlo.mp3"),
 
-    // Song 10
     Song(
         songName: "Poolamme Pilla",
         albumName: "Hanu-Man",
         albumArtImagePath: "assets/images/Hanu_Man.jpg",
         audioPath: "audio/Poolamme_Pilla.mp3"),
 
-    // Song 11
     Song(
         songName: "Neelo Valapu",
         albumName: "Robo",
         albumArtImagePath: "assets/images/Robo.jpg",
         audioPath: "audio/Neelo_Valapu.mp3"),
 
-    // Song 12
     Song(
         songName: "Sarimapa",
         albumName: "Saripodha Sanivaram",
         albumArtImagePath: "assets/images/Saripodha_Sanivaram.jpg",
         audioPath: "audio/Sarimapa.mp3"),
 
-    // Song 13
     Song(
         songName: "Ullaasam",
         albumName: "Saripodha Sanivaram",
@@ -98,39 +85,29 @@ class PlaylistProvider extends ChangeNotifier {
   ];
 
   int? _currentSongIndex;
+  List<Song> _queue = [];
 
-  /*
-    A U D I O P L A Y E R
-  */
-  // audio player
+  // Audio player
   final AudioPlayer _audioPlayer = AudioPlayer();
 
-  //durations
+  // Durations
   Duration _currentDuration = Duration.zero;
   Duration _totalDuration = Duration.zero;
 
-  //constructors
+  // Constructor
   PlaylistProvider() {
-    listenToDuration();
+    _listenToDuration();
   }
 
-  //initially not playing
+  // Initially not playing
   bool _isPlaying = false;
   bool _isShuffling = false;
   bool _isRepeating = false;
 
-  // play the song
-  void play() async {
-    final String path = _playlist[_currentSongIndex!].audioPath;
-    await _audioPlayer.stop();
-    await _audioPlayer.play(AssetSource(path));
-    _isPlaying = true;
-    notifyListeners();
-  }
-
-  //replay the song
-  void replay() async {
+  // Play the song
+  Future<void> play() async {
     if (_currentSongIndex == null) return; // No song selected
+
     final String path = _playlist[_currentSongIndex!].audioPath;
     await _audioPlayer.stop();
     await _audioPlayer.play(AssetSource(path));
@@ -138,108 +115,148 @@ class PlaylistProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  //pause current song
-  void pause() async {
+  // Replay the song
+  Future<void> replay() async {
+    if (_currentSongIndex == null) return; // No song selected
+
+    final String path = _playlist[_currentSongIndex!].audioPath;
+    await _audioPlayer.stop();
+    await _audioPlayer.play(AssetSource(path));
+    _isPlaying = true;
+    notifyListeners();
+  }
+
+  // Pause current song
+  Future<void> pause() async {
     await _audioPlayer.pause();
     _isPlaying = false;
     notifyListeners();
   }
 
-  // resume playing
-  void resume() async {
+  // Resume playing
+  Future<void> resume() async {
     await _audioPlayer.resume();
     _isPlaying = true;
     notifyListeners();
   }
 
-  //pause or resume
-  void PausedOrResume() async {
+  // Pause or resume
+  Future<void> togglePlayPause() async {
     if (_isPlaying) {
-      pause();
+      await pause();
     } else {
-      resume();
+      await resume();
     }
-    notifyListeners();
   }
 
-  // seek to a specific position in the current song
-  void seek(Duration position) async {
+  // Seek to a specific position in the current song
+  Future<void> seek(Duration position) async {
     await _audioPlayer.seek(position);
   }
 
-  //play next song
+  // Play next song
   void playNext() {
-    if (_isShuffling) {
-      _currentSongIndex =
-          (0 + (DateTime.now().millisecondsSinceEpoch % _playlist.length))
-              .toInt();
+    if (_queue.isNotEmpty) {
+      _currentSongIndex = _playlist.indexOf(_queue.removeAt(0)); // Get the next song in the queue
+    } else if (_isShuffling) {
+      _currentSongIndex = DateTime.now().millisecondsSinceEpoch % _playlist.length; // Shuffle to a random song
     } else {
+      // Default to playing the next song in the playlist in order
       if (_currentSongIndex != null) {
-        if (_currentSongIndex! < _playlist.length - 1) {
-          _currentSongIndex = _currentSongIndex! + 1;
-        } else {
-          _currentSongIndex = 0;
-        }
+        _currentSongIndex = (_currentSongIndex! + 1) % _playlist.length;
       }
     }
-    play();
+    play(); // Play the selected song
   }
 
-  // play previous song
-  void playPreious() async {
+
+  // Play previous song
+  Future<void> playPrevious() async {
     if (_currentDuration.inSeconds > 2) {
-      seek(Duration.zero);
+      await seek(Duration.zero);
     } else {
-      if (_currentSongIndex! > 0) {
-        _currentSongIndex = _currentSongIndex! - 1;
-      } else {
-        _currentSongIndex = _playlist.length - 1;
-      }
+      _currentSongIndex = (_currentSongIndex == 0)
+          ? _playlist.length - 1
+          : _currentSongIndex! - 1;
     }
     play();
   }
 
-  //listen to durations
-  void listenToDuration() {
-    // listen to total duration
+  // Listen to durations
+  void _listenToDuration() {
     _audioPlayer.onDurationChanged.listen((newDuration) {
       _totalDuration = newDuration;
       notifyListeners();
     });
 
-    // listen to current duration
     _audioPlayer.onPositionChanged.listen((newPosition) {
       _currentDuration = newPosition;
       notifyListeners();
     });
 
-    //listen for song completion
     _audioPlayer.onPlayerComplete.listen((event) {
       if (_isRepeating) {
-        // Re-play the current song
-        replay();
+        replay(); // Replay the current song if repeat mode is enabled
       } else {
-        playNext();
+        // Add the song back to the queue and play the next song
+        final completedSong = _playlist[_currentSongIndex!];
+        addToQueue(completedSong); // Add the completed song back to the queue
+        playNext(); // Play the next song in the queue
       }
     });
+
   }
 
+  // Toggle shuffle
   void toggleShuffle() {
     _isShuffling = !_isShuffling;
     notifyListeners();
   }
 
+  // Toggle repeat
   void toggleRepeat() {
     _isRepeating = !_isRepeating;
     notifyListeners();
   }
 
-  //dispose audio player
+  // Play from the queue
+  void playFromQueue() {
+    if (_queue.isNotEmpty) {
+      _currentSongIndex = _playlist.indexOf(_queue.removeAt(0));
+      play();
+    }
+  }
 
-  /*
-    G E T T E R S
-  */
+  // Add song to the queue
+  void addToQueue(Song song) {
+    if (!_queue.contains(song)) {
+      _queue.add(song);
+      notifyListeners();
+    }
+  }
 
+  // Remove song from the queue
+  void removeFromQueue(Song song) {
+    _queue.remove(song);
+    notifyListeners();
+  }
+
+  // Add song to the queue and play next
+  void playNextInQueue(Song song) {
+    if (!_queue.contains(song)) {
+      _queue.insert(0, song);
+      notifyListeners();
+    }
+  }
+
+  // Dispose audio player
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  // Getters
   List<Song> get playlist => _playlist;
   int? get currentSongIndex => _currentSongIndex;
   bool get isPlaying => _isPlaying;
@@ -247,20 +264,12 @@ class PlaylistProvider extends ChangeNotifier {
   bool get isRepeating => _isRepeating;
   Duration get currentDuration => _currentDuration;
   Duration get totalDuration => _totalDuration;
+  List<Song> get queue => _queue;
 
-  /*
-    S E T T E R S
-  */
-
+  // Setters
   set currentSongIndex(int? newIndex) {
-    //update current song index
     _currentSongIndex = newIndex;
-
-    if (newIndex != null) {
-      play();
-    }
-
-    //update UI
+    if (newIndex != null) play();
     notifyListeners();
   }
 }

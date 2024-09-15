@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:music_player/themes/theme_provider.dart';
 import 'package:provider/provider.dart';
@@ -8,43 +7,52 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final inversePrimaryColor = Theme.of(context).colorScheme.inversePrimary;
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
+    final systemMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
+
+    // If you want to reflect system mode and not have a toggle here
+    final currentMode = isDarkMode ? "Dark Mode" : "Light Mode";
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primary,
         title: Text(
           "S E T T I N G S",
           style: TextStyle(
-            color: inversePrimaryColor,
+            color: Theme.of(context).colorScheme.inversePrimary,
           ),
         ),
       ),
       body: Container(
+        width: double.infinity,
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.secondary,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
         ),
         padding: const EdgeInsets.all(16),
-        margin: const EdgeInsets.all(25),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        margin: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            //dark mode
-            const Text(
-              "Dark Mode",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
+            const SizedBox(height: 16),
+            // Display system mode for reference
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.all(25),
+              margin: const EdgeInsets.all(10),
+              child: Text(
+                "System Mode: ${systemMode ? "Dark Mode" : "Light Mode"}",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  color: Theme.of(context).colorScheme.inversePrimary,
+                ),
               ),
             ),
-
-            //switch
-            CupertinoSwitch(
-              value:
-                  Provider.of<ThemeProvider>(context, listen: false).isDarkMode,
-              onChanged: (value) =>
-                  Provider.of<ThemeProvider>(context, listen: false)
-                      .toggleTheme(),
-            )
           ],
         ),
       ),

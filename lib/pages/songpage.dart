@@ -10,12 +10,13 @@ class Songpage extends StatelessWidget {
   String formatTime(Duration duration) {
     String twoDigitMinutes = duration.inMinutes.toString();
     String twoDigitSeconds =
-        duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    duration.inSeconds.remainder(60).toString().padLeft(2, '0');
     return "$twoDigitMinutes:$twoDigitSeconds";
   }
 
   @override
   Widget build(BuildContext context) {
+    final inversePrimaryColor = Theme.of(context).colorScheme.inversePrimary;
     return Consumer<PlaylistProvider>(
       builder: (context, value, child) {
         final playlist = value.playlist;
@@ -23,33 +24,77 @@ class Songpage extends StatelessWidget {
         final albumName = currentSong.albumName;
 
         // Filter songs to show only those from the same album
-        final albumSongs =
-            playlist.where((song) => song.albumName == albumName).toList();
+        final albumSongs = playlist.where((song) => song.albumName == albumName).toList();
+
+        // Combine album songs from the playlist and queue to ensure no song is excluded if added to the queue
+        final queueSongs = value.queue.where((song) => song.albumName != albumName).toList();
+        final albumQueueSongs = albumSongs.where((song) => value.queue.contains(song)).toList();
+        final combinedQueueSongs = queueSongs + albumQueueSongs;
 
         return Scaffold(
           endDrawer: Drawer(
-            width: 220.0,
+            width: 250.0,
             child: SafeArea(
-              child: ListView.builder(
-                itemCount: albumSongs.length,
-                itemBuilder: (context, index) {
-                  final song = albumSongs[index];
-                  return ListTile(
-                    title: Text(song.songName),
-                    subtitle: Text(song.albumName),
-                    leading: Image.asset(
-                      song.albumArtImagePath,
-                      width: 50,
-                      height: 50,
-                      fit: BoxFit.cover,
+              child: Column(
+                children: [
+                  // Queue
+                  Container(
+                    color: Theme.of(context).colorScheme.surface,
+                    child: ListTile(
+                      title: Text(
+                        'Q u e u e',
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          color: inversePrimaryColor,
+                        ),
+                      ),
+                      tileColor: Colors.grey[200],
                     ),
-                    onTap: () {
-                      // Set the current song index to the selected song and play it
-                      value.currentSongIndex = playlist.indexOf(song);
-                      Navigator.pop(context); // Close the drawer
-                    },
-                  );
-                },
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: combinedQueueSongs.length,
+                      itemBuilder: (context, index) {
+                        final song = combinedQueueSongs[index];
+                        return ListTile(
+                          title: Text(
+                            song.songName,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.inversePrimary,
+                            ),
+                          ),
+                          subtitle: Text(
+                            song.albumName,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.inversePrimary,
+                            ),
+                          ),
+                          leading: Image.asset(
+                            song.albumArtImagePath,
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(
+                              Icons.remove_circle_outline,
+                              color: Colors.red,
+                            ),
+                            onPressed: () {
+                              value.removeFromQueue(song);
+                            },
+                          ),
+                          onTap: () {
+                            // Play the selected song from the queue
+                            value.currentSongIndex = playlist.indexOf(song);
+                            Navigator.pop(context); // Close the drawer
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -68,18 +113,28 @@ class Songpage extends StatelessWidget {
                         onPressed: () => Navigator.pop(context),
                         icon: const Icon(Icons.arrow_back_ios),
                       ),
-                      const Text("P L A Y L I S T"),
-                      Builder(builder: (context) {
-                        return IconButton(
-                          onPressed: () {
-                            Scaffold.of(context).openEndDrawer();
-                          },
-                          icon: const Icon(Icons.menu),
-                        );
-                      }),
+                      Text(
+                        "P L A Y L I S T",
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.inversePrimary,
+                        ),
+                      ),
+                      Builder(
+                        builder: (context) {
+                          return IconButton(
+                            onPressed: () {
+                              Scaffold.of(context).openEndDrawer();
+                            },
+                            icon: Icon(
+                              Icons.menu,
+                              color: Theme.of(context).colorScheme.inversePrimary,
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 40),
                   // Album artwork
                   NeuBox(
                     child: Column(
@@ -93,12 +148,18 @@ class Songpage extends StatelessWidget {
                           children: [
                             Text(
                               currentSong.songName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 20,
+                                color: Theme.of(context).colorScheme.inversePrimary,
                               ),
                             ),
-                            Text(currentSong.albumName),
+                            Text(
+                              currentSong.albumName,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.inversePrimary,
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -113,13 +174,18 @@ class Songpage extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(formatTime(value.currentDuration)),
+                            Text(
+                              formatTime(value.currentDuration),
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.inversePrimary,
+                              ),
+                            ),
                             IconButton(
                               icon: Icon(
                                 Icons.shuffle,
                                 color: value.isShuffling
                                     ? Colors.green
-                                    : Colors.black,
+                                    : Theme.of(context).colorScheme.inversePrimary,
                               ),
                               onPressed: () {
                                 value.toggleShuffle();
@@ -130,43 +196,73 @@ class Songpage extends StatelessWidget {
                                 Icons.repeat,
                                 color: value.isRepeating
                                     ? Colors.green
-                                    : Colors.black,
+                                    : Theme.of(context).colorScheme.inversePrimary,
                               ),
                               onPressed: () {
                                 value.toggleRepeat();
                               },
                             ),
-                            Text(formatTime(value.totalDuration)),
+                            Text(
+                              formatTime(value.totalDuration),
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.inversePrimary,
+                              ),
+                            ),
                           ],
                         ),
                       ),
                       SliderTheme(
                         data: SliderTheme.of(context).copyWith(
                           thumbShape: const RoundSliderThumbShape(
-                              enabledThumbRadius: 10),
+                            enabledThumbRadius: 10,
+                          ),
                           activeTrackColor: Colors.green,
-                          inactiveTrackColor: Colors.grey,
+                          thumbColor: Colors.green,
+                          inactiveTrackColor: Theme.of(context).colorScheme.inversePrimary,
                         ),
-                        child: Slider(
-                          min: 0,
-                          max: value.totalDuration.inSeconds.toDouble(),
-                          value: value.currentDuration.inSeconds.toDouble(),
-                          onChanged: (double newValue) {
-                            value.seek(Duration(seconds: newValue.toInt()));
-                          },
+                        child: Container(
+                          decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(25),
+                              boxShadow: [
+                                //darker shadow on bottom right
+                                BoxShadow(
+                                  color: Colors.grey.shade500,
+                                  blurRadius: 15,
+                                  offset: const Offset(4, 4),
+                                ),
+                                //lighter shadow on top left
+                                BoxShadow(
+                                  color: Theme.of(context).colorScheme.inversePrimary,
+                                  blurRadius: 15,
+                                  offset: Offset(-4, -4),
+                                ),
+                              ]),
+                          padding: const EdgeInsets.all(2),
+                          child: Slider(
+                            min: 0,
+                            max: value.totalDuration.inSeconds.toDouble(),
+                            value: value.currentDuration.inSeconds.toDouble(),
+                            onChanged: (double newValue) {
+                              value.seek(Duration(seconds: newValue.toInt()));
+                            },
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 40),
                   // Playback controls
                   Row(
                     children: [
                       Expanded(
                         child: GestureDetector(
-                          onTap: value.playPreious,
-                          child: const NeuBox(
-                            child: Icon(Icons.skip_previous),
+                          onTap: value.playPrevious,
+                          child: NeuBox(
+                            child: Icon(
+                              Icons.skip_previous,
+                              color: Theme.of(context).colorScheme.inversePrimary,
+                            ),
                           ),
                         ),
                       ),
@@ -174,20 +270,31 @@ class Songpage extends StatelessWidget {
                       Expanded(
                         flex: 2,
                         child: GestureDetector(
-                          onTap: value.PausedOrResume,
+                          onTap: value.togglePlayPause,
                           child: NeuBox(
                             child: Icon(value.isPlaying
                                 ? Icons.pause
-                                : Icons.play_arrow),
+                                : Icons.play_arrow,
+                              color: Theme.of(context).colorScheme.inversePrimary,
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 20),
                       Expanded(
                         child: GestureDetector(
-                          onTap: value.playNext,
-                          child: const NeuBox(
-                            child: Icon(Icons.skip_next),
+                          onTap: () {
+                            if (value.queue.isNotEmpty) {
+                              value.playFromQueue(); // Play the next song from the queue
+                            } else {
+                              value.playNext();
+                            }
+                          },
+                          child: NeuBox(
+                            child: Icon(
+                              Icons.skip_next,
+                              color: Theme.of(context).colorScheme.inversePrimary,
+                            ),
                           ),
                         ),
                       ),

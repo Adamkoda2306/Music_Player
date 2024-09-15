@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:music_player/models/playlist_provider.dart';
-import 'package:music_player/pages/HomePage.dart';
+import 'package:music_player/pages/homepage.dart';
+import 'package:music_player/themes/darkmode.dart';
+import 'package:music_player/themes/lightmode.dart';
 import 'package:music_player/themes/theme_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -25,9 +27,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return MaterialApp(
       home: const Homepage(),
-      theme: Provider.of<ThemeProvider>(context).themeData,
+      themeMode: themeProvider.themeMode, // Use ThemeMode for switching
+      theme: lightMode,                  // Light theme data
+      darkTheme: darkMode,               // Dark theme data
     );
   }
 }

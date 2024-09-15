@@ -25,8 +25,16 @@ class MyDrawer extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(left: 25, top: 25),
             child: ListTile(
-              title: Text("H O M E"),
-              leading: Icon(Icons.home),
+              title: Text(
+                "H O M E",
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.inversePrimary,
+                ),
+              ),
+              leading: Icon(
+                  Icons.home,
+                color: Theme.of(context).colorScheme.inversePrimary,
+              ),
               onTap: () => Navigator.pop(context),
             ),
           ),
@@ -35,8 +43,16 @@ class MyDrawer extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(left: 25, top: 0),
             child: ListTile(
-              title: Text("S E T T I N G S"),
-              leading: Icon(Icons.settings),
+              title: Text(
+                "S E T T I N G S",
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.inversePrimary,
+                ),
+              ),
+              leading: Icon(
+                Icons.settings,
+                color: Theme.of(context).colorScheme.inversePrimary,
+              ),
               onTap: () {
                 Navigator.pop(context);
                 // also goto to settings page

@@ -23,7 +23,7 @@ class NeuBox extends StatelessWidget {
 
             //lighter shadow on top left
             BoxShadow(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.inversePrimary,
               blurRadius: 15,
               offset: const Offset(-4, -4),
             ),

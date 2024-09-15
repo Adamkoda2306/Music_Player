@@ -32,8 +32,16 @@ class _HomepageState extends State<Homepage> {
     });
   }
 
-  // Go to a song
+  // Go to a song and add it to the queue if not already present
   void goToSong(int songIndex) {
+    // Get the selected song
+    Song selectedSong = playlistProvider.playlist[songIndex];
+
+    // Check if the song is already in the queue
+    if (!playlistProvider.queue.contains(selectedSong)) {
+      playlistProvider.addToQueue(selectedSong); // Add the song to the queue
+    }
+
     // Update current song index
     playlistProvider.currentSongIndex = songIndex;
 
@@ -46,13 +54,24 @@ class _HomepageState extends State<Homepage> {
     );
   }
 
+  // Handle menu item selection
+  void handleMenuSelection(String value, Song song) {
+    switch (value) {
+      case 'Add to Queue':
+        playlistProvider.addToQueue(song); // Ensure this method exists in PlaylistProvider
+        break;
+      case 'Play Next':
+        playlistProvider.playNextInQueue(song); // Adjust to correct method if necessary
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final inversePrimaryColor = Theme.of(context).colorScheme.inversePrimary;
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primary,
         title: Text(
           "P L A Y L I S T",
           style: TextStyle(
@@ -68,15 +87,18 @@ class _HomepageState extends State<Homepage> {
               decoration: InputDecoration(
                 hintText: 'Search songs...',
                 hintStyle: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
+                  color: Theme.of(context).colorScheme.inversePrimary,
                 ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Theme.of(context).colorScheme.secondary,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10.0),
                   borderSide: BorderSide.none,
                 ),
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: Theme.of(context).colorScheme.inversePrimary,
+                ),
               ),
             ),
           ),
@@ -106,9 +128,48 @@ class _HomepageState extends State<Homepage> {
 
                     // Return list tile UI
                     return ListTile(
-                      title: Text(song.songName),
-                      subtitle: Text(song.albumName),
+                      title: Text(
+                        song.songName,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.inversePrimary,
+                        ),
+                      ),
+                      subtitle: Text(
+                        song.albumName,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.inversePrimary,
+                        ),
+                      ),
                       leading: Image.asset(song.albumArtImagePath),
+                      trailing: PopupMenuButton<String>(
+                        onSelected: (value) => handleMenuSelection(value, song),
+                        itemBuilder: (BuildContext context) {
+                          return [
+                             PopupMenuItem<String>(
+                              value: 'Add to Queue',
+                              child: Text(
+                                'Add to Queue',
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.inversePrimary,
+                                ),
+                              ),
+                            ),
+                             PopupMenuItem<String>(
+                              value: 'Play Next',
+                              child: Text(
+                                  'Play Next',
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.inversePrimary,
+                                ),
+                              ),
+                            ),
+                          ];
+                        },
+                        icon: Icon(
+                          Icons.more_vert,
+                          color: Theme.of(context).colorScheme.inversePrimary,
+                        ),
+                      ),
                       onTap: () {
                         // Find the index of the selected song in the full playlist
                         int originalIndex = playlist.indexOf(song);
@@ -134,12 +195,27 @@ class _HomepageState extends State<Homepage> {
 
               return GestureDetector(
                 onTap: () {
-                  goToSong(value.currentSongIndex!);
+                  // Navigate to the Songpage when the bottom bar is tapped
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const Songpage(),
+                    ),
+                  );
                 },
                 child: Container(
-                  color: Theme.of(context).colorScheme.primary,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.6), // Glass effect background
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: Offset(0, -5),
+                      ),
+                    ],
+                  ),
                   child: Row(
                     children: [
                       // Album art image
@@ -157,13 +233,17 @@ class _HomepageState extends State<Homepage> {
                           children: [
                             Text(
                               currentSong.songName,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.inversePrimary,
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
                               currentSong.albumName,
-                              style: const TextStyle(color: Colors.black),
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.inversePrimary,
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
@@ -171,27 +251,32 @@ class _HomepageState extends State<Homepage> {
                       ),
                       // Play previous button
                       IconButton(
-                        icon: const Icon(Icons.skip_previous),
+                        icon: Icon(
+                          Icons.skip_previous,
+                          color: Theme.of(context).colorScheme.inversePrimary,
+                        ),
                         onPressed: () {
-                          value
-                              .playPreious(); // Implement this in your provider
+                          value.playPrevious(); // Ensure this method exists in PlaylistProvider
                         },
                       ),
                       // Play/Pause button
                       IconButton(
                         icon: Icon(
                           value.isPlaying ? Icons.pause : Icons.play_arrow,
+                          color: Theme.of(context).colorScheme.inversePrimary,
                         ),
                         onPressed: () {
-                          value
-                              .PausedOrResume(); // Implement this in your provider
+                          value.togglePlayPause(); // Ensure this method exists in PlaylistProvider
                         },
                       ),
                       // Play next button
                       IconButton(
-                        icon: const Icon(Icons.skip_next),
+                        icon: Icon(
+                          Icons.skip_next,
+                          color: Theme.of(context).colorScheme.inversePrimary,
+                        ),
                         onPressed: () {
-                          value.playNext(); // Implement this in your provider
+                          value.playNext(); // Ensure this method exists in PlaylistProvider
                         },
                       ),
                     ],

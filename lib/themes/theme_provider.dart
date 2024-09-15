@@ -3,29 +3,25 @@ import 'package:music_player/themes/darkmode.dart';
 import 'package:music_player/themes/lightmode.dart';
 
 class ThemeProvider extends ChangeNotifier {
-  // initiall, light mode
-  ThemeData _themeData = lightMode;
+  // Default to system theme
+  ThemeMode _themeMode = ThemeMode.system;
 
-  // get theme
-  ThemeData get themeData => _themeData;
+  // Get theme mode
+  ThemeMode get themeMode => _themeMode;
 
-  // is dark mode
-  bool get isDarkMode => _themeData == darkMode;
-
-  // set theme
-  set themeData(ThemeData themeData) {
-    _themeData = themeData;
-
-    // Updates the UI
+  // Set theme mode
+  set themeMode(ThemeMode themeMode) {
+    _themeMode = themeMode;
     notifyListeners();
   }
 
-  // toggle theme
+  // Toggle theme
   void toggleTheme() {
-    if (_themeData == lightMode) {
-      themeData = darkMode;
+    if (_themeMode == ThemeMode.light) {
+      _themeMode = ThemeMode.dark;
     } else {
-      themeData = lightMode;
+      _themeMode = ThemeMode.light;
     }
+    notifyListeners();
   }
 }
